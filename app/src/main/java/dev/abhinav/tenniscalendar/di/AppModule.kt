@@ -1,0 +1,62 @@
+package dev.abhinav.tenniscalendar.di
+
+import dev.abhinav.tenniscalendar.BuildConfig
+import dev.abhinav.tenniscalendar.data.ConnectivityObserver
+import dev.abhinav.tenniscalendar.data.TennisApi
+import dev.abhinav.tenniscalendar.data.TennisCache
+import dev.abhinav.tenniscalendar.data.TennisRepository
+import dev.abhinav.tenniscalendar.ui.calendar.CalendarViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import org.koin.core.module.dsl.viewModel
+import org.koin.dsl.module
+import retrofit2.Retrofit
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.util.concurrent.TimeUnit
+
+val appModule = module {
+
+    single {
+        Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+            coerceInputValues = true
+        }
+    }
+
+    single {
+        val logging = HttpLoggingInterceptor().apply {
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.BODY
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
+        }
+        OkHttpClient.Builder()
+            .connectTimeout(20, TimeUnit.SECONDS)
+            .readTimeout(20, TimeUnit.SECONDS)
+            .addInterceptor(logging)
+            .build()
+    }
+
+    single<TennisApi> {
+        val json: Json = get()
+        Retrofit.Builder()
+            .baseUrl(TennisApi.BASE_URL)
+            .client(get())
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+            .create(TennisApi::class.java)
+    }
+
+    single { TennisCache(get()) }
+
+    single { ConnectivityObserver(get()) }
+
+    single { TennisRepository(get(), get(), get(), Dispatchers.IO) }
+
+    viewModel { CalendarViewModel(get(), get()) }
+}
