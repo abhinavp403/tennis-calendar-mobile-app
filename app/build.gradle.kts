@@ -24,7 +24,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.tennis.calendar"
+        applicationId = "dev.abhinav.tenniscalendar"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

@@ -76,5 +76,5 @@ The 1500 tier label is tour-aware ("ATP Finals" / "WTA Finals").
 - The launcher uses a generated tennis-ball adaptive icon (API 26+). The legacy raster
   fallback (API 24–25) still shows the scaffold icon; regenerate via **Image Asset Studio** if
   you need it. The referenced `app-logo.png` did not exist in the repo.
-- `applicationId = com.tennis.calendar` (per the brief). The Kotlin namespace stays
-  `dev.abhinav.tenniscalendar` (existing source tree).
+- `applicationId` and Kotlin namespace are both `dev.abhinav.tenniscalendar` (matches the
+  Play Console listing).

@@ -27,31 +27,49 @@ Verify the signature:
 
 ## 2. App identity
 
-- **Package (applicationId):** `com.tennis.calendar`
-- **versionCode:** 1 · **versionName:** 1.0.0 (bump both for each upload)
+- **Package (applicationId):** `dev.abhinav.tenniscalendar`
+- **versionCode:** 2 · **versionName:** 1.0.0 (bump versionCode for each upload)
 - **minSdk:** 24 · **targetSdk:** 36
 
-## 3. Store listing copy (draft — reuse/edit)
+## 3. Store listing copy (final — paste into Play Console)
 
-**Title:** Tennis Calendar
+**Title (≤30 chars):** Tennis Calendar
 
 **Short description (≤80 chars):**
-> ATP & WTA 2026 season calendar — results, rankings, and year-to-date player stats.
+> ATP & WTA 2026 season calendar — results, rankings & year-to-date player stats.
 
-**Full description:**
-> Follow the entire 2026 tennis season in one place. Tennis Calendar shows every ATP and WTA
-> tournament on a clean month grid, color-coded by tier — Grand Slams, the Tour Finals, 1000s,
-> 500s and 250s. Tap any completed event for the champion, runner-up and final score.
+**Full description (≤4000 chars):**
+> Follow the entire 2026 tennis season in one place. Tennis Calendar puts every ATP and WTA
+> tournament on a clean, colour-coded month grid — Grand Slams, the Tour Finals, 1000s, 500s and
+> 250s — so you always know what's on and who won.
 >
-> • Switch instantly between the ATP and WTA tours
+> Tap any completed event to see the champion, runner-up and final score. Switch between the men's
+> and women's tours with a single tap, and filter the calendar by surface.
+>
+> FEATURES
+> • Full 2026 ATP and WTA calendar on a month-by-month grid, colour-coded by tournament tier
+> • One-tap switch between the ATP and WTA tours
 > • Filter by surface: Hard, Indoor, Clay or Grass
-> • Year-to-date Player Stats with level-weighted points, titles, finals and finals win %
-> • Per-player profiles with best surface and full title / runner-up lists
+> • Tap a finished tournament for champion, runner-up and final score
+> • Year-to-date Player Stats — level-weighted points, titles, finals reached and finals win %
+> • Per-player profiles with best surface, a surface-by-surface breakdown, and full title / runner-up lists
 > • Live rankings with ▲▼ movement between snapshots
 > • Month results summary and a season-long Champions Wall
-> • Search for any tournament or player
+> • Fast search for any tournament or player, with country flags
+> • Adaptive light and dark themes that follow your system setting
+> • Designed for both portrait and landscape, including a two-pane tablet-friendly layout
 >
-> Data refreshes on launch and is cached for offline viewing. No account, no ads, no tracking.
+> WORKS OFFLINE
+> Data is fetched fresh and cached on your device, so the calendar keeps working with no connection.
+> It refreshes automatically when you're back online — or just pull down to refresh.
+>
+> PRIVATE BY DESIGN
+> No account. No ads. No tracking. The app only makes read-only requests for public tournament and
+> ranking data and stores a copy on your device for offline use. Nothing about you is collected or
+> shared.
+>
+> Whether you're tracking the race to the season finals or just want to know who lifted the trophy
+> last week, Tennis Calendar keeps the whole tour at your fingertips.
 
 ## 4. Data safety form
 
@@ -73,7 +91,7 @@ Play Console *App content → Privacy policy* field. (GitHub Pages or a Gist wor
 
 ## 7. Upload flow (you perform these)
 
-1. Play Console → **Create app** (`com.tennis.calendar`, default language, app, free).
+1. Play Console → **Create app** (`dev.abhinav.tenniscalendar`, default language, app, free).
 2. **Testing → Internal testing → Create release** → upload `app-release.aab`.
 3. Complete: store listing (copy above), graphics (icon 512×512, feature graphic 1024×500,
    ≥2 phone screenshots), content rating, data safety, privacy policy URL, target audience.
