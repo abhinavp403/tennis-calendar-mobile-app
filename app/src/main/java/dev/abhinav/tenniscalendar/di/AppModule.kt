@@ -1,6 +1,7 @@
 package dev.abhinav.tenniscalendar.di
 
 import dev.abhinav.tenniscalendar.BuildConfig
+import dev.abhinav.tenniscalendar.data.AssetDataSource
 import dev.abhinav.tenniscalendar.data.ConnectivityObserver
 import dev.abhinav.tenniscalendar.data.TennisApi
 import dev.abhinav.tenniscalendar.data.TennisCache
@@ -54,9 +55,11 @@ val appModule = module {
 
     single { TennisCache(get()) }
 
+    single { AssetDataSource(get()) }
+
     single { ConnectivityObserver(get()) }
 
-    single { TennisRepository(get(), get(), get(), Dispatchers.IO) }
+    single { TennisRepository(get(), get(), get(), get(), Dispatchers.IO) }
 
     viewModel { CalendarViewModel(get(), get()) }
 }

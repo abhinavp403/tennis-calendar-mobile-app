@@ -19,9 +19,19 @@ import java.io.IOException
 class TennisRepository(
     private val api: TennisApi,
     private val cache: TennisCache,
+    private val assets: AssetDataSource,
     private val json: Json,
     private val ioDispatcher: CoroutineDispatcher,
 ) {
+    /**
+     * Local-only load (no network): the disk cache if present, otherwise the bundled asset seed.
+     * Lets the UI show content instantly on launch while the network refresh runs. Never fails as
+     * long as the bundled seed parses, so the app is never stuck on an empty loading screen.
+     */
+    suspend fun loadLocal(): TennisData? = withContext(ioDispatcher) {
+        (cache.read() ?: assets.read())?.let { parseOrNull(it) }
+    }
+
     suspend fun load(): DataResult<TennisData> = withContext(ioDispatcher) {
         try {
             val tournaments = api.getTournaments()
@@ -54,15 +64,22 @@ class TennisRepository(
         }
     }
 
+    // Network failed: fall back to the disk cache, then the bundled asset seed, so there is almost
+    // always something to show. Only a genuinely unreadable seed yields a Failure.
     private fun fallBackToCache(errorIfNoCache: DataError): DataResult<TennisData> {
-        val cached = cache.read() ?: return DataResult.Failure(errorIfNoCache)
-        return runCatching {
-            val tournaments = json.decodeFromString(TournamentsResponse.serializer(), cached.tournaments)
-            val rankings = json.decodeFromString(RankingsResponse.serializer(), cached.rankings)
-            val players = cached.players
-                ?.let { json.decodeFromString(PlayersResponse.serializer(), it) }
-                ?: PlayersResponse()
-            DataResult.Success(TennisData(tournaments, rankings, players), fromCache = true)
-        }.getOrElse { DataResult.Failure(errorIfNoCache) }
+        val raw = cache.read() ?: assets.read() ?: return DataResult.Failure(errorIfNoCache)
+        return parseOrNull(raw)
+            ?.let { DataResult.Success(it, fromCache = true) }
+            ?: DataResult.Failure(errorIfNoCache)
     }
+
+    private fun parseOrNull(cached: TennisCache.Cached): TennisData? = runCatching {
+        TennisData(
+            tournaments = json.decodeFromString(TournamentsResponse.serializer(), cached.tournaments),
+            rankings = json.decodeFromString(RankingsResponse.serializer(), cached.rankings),
+            players = cached.players
+                ?.let { json.decodeFromString(PlayersResponse.serializer(), it) }
+                ?: PlayersResponse(),
+        )
+    }.getOrNull()
 }

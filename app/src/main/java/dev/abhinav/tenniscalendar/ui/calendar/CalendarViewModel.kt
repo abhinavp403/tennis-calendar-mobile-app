@@ -3,6 +3,7 @@ package dev.abhinav.tenniscalendar.ui.calendar
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.abhinav.tenniscalendar.data.ConnectivityObserver
+import dev.abhinav.tenniscalendar.data.DataError
 import dev.abhinav.tenniscalendar.data.DataResult
 import dev.abhinav.tenniscalendar.data.TennisRepository
 import dev.abhinav.tenniscalendar.domain.NameMatch
@@ -44,38 +45,57 @@ class CalendarViewModel(
     private var heavyCache: Heavy? = null
 
     init {
-        load()
+        viewModelScope.launch {
+            // Show the bundled/cached seed immediately so the app never sits on an empty spinner
+            // (offline, slow networks, or store-review crawlers), then refresh from the network.
+            if (data == null) {
+                repository.loadLocal()?.let { seed ->
+                    data = seed
+                    heavyKey = null
+                    _uiState.update { recompute(it.copy(isLoading = false)) }
+                }
+            }
+            fetch()
+        }
         observeConnectivity()
     }
 
     /**
-     * @param showLoading blanks the screen with a spinner (first load). A refresh keeps the current
-     * data on screen and, on failure, leaves it in place rather than surfacing an error.
+     * @param showLoading blanks the screen with a spinner. Only used when there is nothing to show
+     * yet; a refresh keeps the current data on screen.
      */
     fun load(showLoading: Boolean = true) {
         _uiState.update {
             if (showLoading) it.copy(isLoading = true, error = null) else it.copy(isRefreshing = true)
         }
-        viewModelScope.launch {
-            when (val result = repository.load()) {
-                is DataResult.Success -> {
-                    data = result.data
-                    heavyKey = null // fresh data invalidates the derivation cache
-                    _uiState.update {
-                        recompute(it.copy(isLoading = false, isRefreshing = false, error = null, isOffline = result.fromCache))
-                    }
-                }
-                is DataResult.Failure -> _uiState.update {
-                    // Keep whatever we're already showing on a background refresh failure.
-                    if (data != null) it.copy(isLoading = false, isRefreshing = false)
-                    else it.copy(isLoading = false, isRefreshing = false, error = result.error)
-                }
-            }
-        }
+        viewModelScope.launch { fetch() }
     }
 
     /** Re-fetch without blanking the screen (used by the offline banner and connectivity regain). */
     fun refresh() = load(showLoading = false)
+
+    /** Fetch from the network and apply the result. Guarded so no throwable can leave the UI hung. */
+    private suspend fun fetch() {
+        val result = try {
+            repository.load()
+        } catch (t: Throwable) {
+            DataResult.Failure(DataError.UNKNOWN)
+        }
+        when (result) {
+            is DataResult.Success -> {
+                data = result.data
+                heavyKey = null // fresh data invalidates the derivation cache
+                _uiState.update {
+                    recompute(it.copy(isLoading = false, isRefreshing = false, error = null, isOffline = result.fromCache))
+                }
+            }
+            is DataResult.Failure -> _uiState.update {
+                // Keep whatever we're already showing (seed/cache); only error out with nothing to show.
+                if (data != null) it.copy(isLoading = false, isRefreshing = false, isOffline = true)
+                else it.copy(isLoading = false, isRefreshing = false, error = result.error)
+            }
+        }
+    }
 
     private fun observeConnectivity() {
         viewModelScope.launch {
