@@ -51,6 +51,9 @@ data class TournamentsResponse(
     val wta: List<Tournament> = emptyList(),
 ) {
     fun forTour(tour: Tour): List<Tournament> = if (tour == Tour.ATP) atp else wta
+
+    /** Both tours combined. */
+    fun all(): List<Tournament> = atp + wta
 }
 
 @Serializable

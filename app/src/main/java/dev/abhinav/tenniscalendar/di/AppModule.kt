@@ -3,9 +3,11 @@ package dev.abhinav.tenniscalendar.di
 import dev.abhinav.tenniscalendar.BuildConfig
 import dev.abhinav.tenniscalendar.data.AssetDataSource
 import dev.abhinav.tenniscalendar.data.ConnectivityObserver
+import dev.abhinav.tenniscalendar.data.NotificationPrefs
 import dev.abhinav.tenniscalendar.data.TennisApi
 import dev.abhinav.tenniscalendar.data.TennisCache
 import dev.abhinav.tenniscalendar.data.TennisRepository
+import dev.abhinav.tenniscalendar.notifications.TournamentNotifier
 import dev.abhinav.tenniscalendar.ui.calendar.CalendarViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
@@ -58,6 +60,10 @@ val appModule = module {
     single { AssetDataSource(get()) }
 
     single { ConnectivityObserver(get()) }
+
+    single { NotificationPrefs(get()) }
+
+    single { TournamentNotifier(get()) }
 
     single { TennisRepository(get(), get(), get(), get(), Dispatchers.IO) }
 

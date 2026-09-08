@@ -133,7 +133,7 @@ class CalendarViewModel(
 
         // Derive the season range from the tournament dates (both tours), snapped to full years so
         // empty trailing/leading months (e.g. December with no events) are still shown.
-        val allDates = (d.tournaments.atp + d.tournaments.wta)
+        val allDates = d.tournaments.all()
             .flatMap { listOfNotNull(parseDate(it.start), parseDate(it.end)) }
         val minMonth = allDates.minOrNull()?.let { YearMonth.of(it.year, 1) } ?: input.month
         val maxMonth = allDates.maxOrNull()?.let { YearMonth.of(it.year, 12) } ?: input.month
