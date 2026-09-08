@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -87,6 +88,7 @@ import dev.abhinav.tenniscalendar.ui.common.TournamentDetailSheet
 import dev.abhinav.tenniscalendar.ui.rankings.RankingsDialog
 import dev.abhinav.tenniscalendar.ui.search.PlayerSearchDialog
 import dev.abhinav.tenniscalendar.ui.search.TournamentSearchDialog
+import dev.abhinav.tenniscalendar.ui.settings.SettingsScreen
 import dev.abhinav.tenniscalendar.ui.stats.PlayerStatsDialog
 import dev.abhinav.tenniscalendar.ui.summary.ChampionsWallDialog
 import dev.abhinav.tenniscalendar.ui.summary.MonthSummaryDialog
@@ -111,6 +113,7 @@ fun CalendarScreen(viewModel: CalendarViewModel = koinViewModel()) {
     var overlay by rememberSaveable { mutableStateOf<Overlay?>(null) }
     var sheetTournament by remember { mutableStateOf<Tournament?>(null) }
     var showMonthPicker by rememberSaveable { mutableStateOf(false) }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -139,6 +142,9 @@ fun CalendarScreen(viewModel: CalendarViewModel = koinViewModel()) {
                     }
                     IconButton(onClick = { overlay = Overlay.PLAYER_SEARCH }) {
                         Icon(Icons.Default.PersonSearch, contentDescription = "Find player")
+                    }
+                    IconButton(onClick = { showSettings = true }) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -179,6 +185,10 @@ fun CalendarScreen(viewModel: CalendarViewModel = koinViewModel()) {
             onSelect = { viewModel.setMonth(it); showMonthPicker = false },
             onDismiss = { showMonthPicker = false },
         )
+    }
+
+    if (showSettings) {
+        SettingsScreen(onDismiss = { showSettings = false })
     }
 
     when (overlay) {

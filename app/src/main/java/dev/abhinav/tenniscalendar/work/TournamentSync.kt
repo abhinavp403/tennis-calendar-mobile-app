@@ -13,33 +13,44 @@ import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
 /**
- * Schedules the tournament-results check to run shortly after the data source refreshes. The Gist is
- * rebuilt by a GitHub Action at 01:00 and 09:00 UTC, so we check ~30 min later, twice a day.
- *
- * Each slot is a self-sustaining daily [PeriodicWorkRequest] whose first run is aligned to the target
- * time via an initial delay; WorkManager keeps repeating it, so a single failed/interrupted run never
- * breaks the schedule.
+ * Schedules the tournament-results check. By default the Gist is rebuilt by a GitHub Action at 01:00
+ * and 09:00 UTC, so the two default slots run ~30 min later; the times are user-configurable in
+ * Settings. Each slot is a self-sustaining daily [PeriodicWorkRequest] whose first run is aligned to
+ * the target via an initial delay, so a single failed/interrupted run never breaks the schedule.
  */
 object TournamentSync {
 
-    /** UTC times to run — 30 min after each Gist refresh (01:00 / 09:00 UTC) — with unique names. */
-    private val SLOTS = listOf(
-        LocalTime.of(1, 30) to "tournament-sync-0130",
-        LocalTime.of(9, 30) to "tournament-sync-0930",
-    )
+    private const val PREFIX = "tournament-sync-"
 
-    fun schedule(context: Context) {
+    /** Upper bound on slot count, used to cancel stale slots when the user reduces them. */
+    private const val MAX_SLOTS = 4
+
+    /** Names used before slots were configurable; cancelled on (re)schedule to avoid duplicates. */
+    private val LEGACY_NAMES = listOf("tournament-sync-0130", "tournament-sync-0930")
+
+    fun schedule(context: Context, slots: List<LocalTime>) {
         val workManager = WorkManager.getInstance(context)
+        LEGACY_NAMES.forEach(workManager::cancelUniqueWork)
+        // Cancel any slots beyond the ones we're about to (re)schedule.
+        for (i in slots.size until MAX_SLOTS) workManager.cancelUniqueWork(PREFIX + i)
+
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
-        for ((time, name) in SLOTS) {
+        slots.forEachIndexed { i, time ->
             val request = PeriodicWorkRequestBuilder<TournamentSyncWorker>(24, TimeUnit.HOURS)
                 .setInitialDelay(millisUntil(time), TimeUnit.MILLISECONDS)
                 .setConstraints(constraints)
                 .build()
-            workManager.enqueueUniquePeriodicWork(name, ExistingPeriodicWorkPolicy.UPDATE, request)
+            workManager.enqueueUniquePeriodicWork(PREFIX + i, ExistingPeriodicWorkPolicy.UPDATE, request)
         }
+    }
+
+    /** Stop all scheduled checks (notifications turned off). */
+    fun cancel(context: Context) {
+        val workManager = WorkManager.getInstance(context)
+        LEGACY_NAMES.forEach(workManager::cancelUniqueWork)
+        repeat(MAX_SLOTS) { workManager.cancelUniqueWork(PREFIX + it) }
     }
 
     /** Milliseconds from [now] until the next occurrence of [target] in UTC. Pure, for testing. */

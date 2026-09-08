@@ -11,12 +11,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import dev.abhinav.tenniscalendar.data.Settings
+import dev.abhinav.tenniscalendar.data.SettingsRepository
+import dev.abhinav.tenniscalendar.data.ThemeMode
 import dev.abhinav.tenniscalendar.ui.calendar.CalendarScreen
 import dev.abhinav.tenniscalendar.ui.theme.TennisCalendarTheme
+import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,8 +34,14 @@ class MainActivity : ComponentActivity() {
         // CalendarScreen.
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            TennisCalendarTheme {
-                val darkTheme = isSystemInDarkTheme()
+            val settings by koinInject<SettingsRepository>().settings
+                .collectAsStateWithLifecycle(initialValue = Settings())
+            val darkTheme = when (settings.themeMode) {
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+            }
+            TennisCalendarTheme(darkTheme = darkTheme) {
                 val view = LocalView.current
                 SideEffect {
                     WindowCompat.getInsetsController(window, view).apply {

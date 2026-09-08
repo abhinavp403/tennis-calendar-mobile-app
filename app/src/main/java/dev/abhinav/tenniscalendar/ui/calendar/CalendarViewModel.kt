@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import dev.abhinav.tenniscalendar.data.ConnectivityObserver
 import dev.abhinav.tenniscalendar.data.DataError
 import dev.abhinav.tenniscalendar.data.DataResult
+import dev.abhinav.tenniscalendar.data.SettingsRepository
 import dev.abhinav.tenniscalendar.data.TennisRepository
 import dev.abhinav.tenniscalendar.domain.NameMatch
 import dev.abhinav.tenniscalendar.domain.PlayerStat
@@ -17,6 +18,7 @@ import dev.abhinav.tenniscalendar.model.Tournament
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -26,6 +28,7 @@ import java.time.format.DateTimeFormatter
 class CalendarViewModel(
     private val repository: TennisRepository,
     private val connectivity: ConnectivityObserver,
+    private val settings: SettingsRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CalendarUiState())
@@ -46,6 +49,9 @@ class CalendarViewModel(
 
     init {
         viewModelScope.launch {
+            // Apply the user's default tour before first paint.
+            val defaultTour = runCatching { settings.settings.first().defaultTour }.getOrDefault(Tour.ATP)
+            if (defaultTour != _uiState.value.tour) _uiState.update { it.copy(tour = defaultTour) }
             // Show the bundled/cached seed immediately so the app never sits on an empty spinner
             // (offline, slow networks, or store-review crawlers), then refresh from the network.
             if (data == null) {

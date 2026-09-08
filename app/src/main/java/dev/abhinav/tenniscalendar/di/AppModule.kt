@@ -4,11 +4,13 @@ import dev.abhinav.tenniscalendar.BuildConfig
 import dev.abhinav.tenniscalendar.data.AssetDataSource
 import dev.abhinav.tenniscalendar.data.ConnectivityObserver
 import dev.abhinav.tenniscalendar.data.NotificationPrefs
+import dev.abhinav.tenniscalendar.data.SettingsRepository
 import dev.abhinav.tenniscalendar.data.TennisApi
 import dev.abhinav.tenniscalendar.data.TennisCache
 import dev.abhinav.tenniscalendar.data.TennisRepository
 import dev.abhinav.tenniscalendar.notifications.TournamentNotifier
 import dev.abhinav.tenniscalendar.ui.calendar.CalendarViewModel
+import dev.abhinav.tenniscalendar.ui.settings.SettingsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -65,7 +67,11 @@ val appModule = module {
 
     single { TournamentNotifier(get()) }
 
+    single { SettingsRepository(get()) }
+
     single { TennisRepository(get(), get(), get(), get(), Dispatchers.IO) }
 
-    viewModel { CalendarViewModel(get(), get()) }
+    viewModel { CalendarViewModel(get(), get(), get()) }
+
+    viewModel { SettingsViewModel(get(), get()) }
 }
