@@ -37,6 +37,7 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -47,6 +48,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -114,6 +118,7 @@ fun CalendarScreen(viewModel: CalendarViewModel = koinViewModel()) {
     var sheetTournament by remember { mutableStateOf<Tournament?>(null) }
     var showMonthPicker by rememberSaveable { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
+    var menuOpen by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -134,17 +139,36 @@ fun CalendarScreen(viewModel: CalendarViewModel = koinViewModel()) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { overlay = Overlay.CHAMPIONS }) {
-                        Icon(Icons.Default.EmojiEvents, contentDescription = "Champions wall")
-                    }
-                    IconButton(onClick = { overlay = Overlay.TOURNAMENT_SEARCH }) {
-                        Icon(Icons.Default.Search, contentDescription = "Find tournament")
-                    }
-                    IconButton(onClick = { overlay = Overlay.PLAYER_SEARCH }) {
-                        Icon(Icons.Default.PersonSearch, contentDescription = "Find player")
-                    }
-                    IconButton(onClick = { showSettings = true }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    Box {
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                        }
+                        DropdownMenu(
+                            expanded = menuOpen,
+                            onDismissRequest = { menuOpen = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Find player") },
+                                leadingIcon = { Icon(Icons.Default.PersonSearch, contentDescription = null) },
+                                onClick = { menuOpen = false; overlay = Overlay.PLAYER_SEARCH },
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Find tournament") },
+                                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                                onClick = { menuOpen = false; overlay = Overlay.TOURNAMENT_SEARCH },
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Champions wall") },
+                                leadingIcon = { Icon(Icons.Default.EmojiEvents, contentDescription = null) },
+                                onClick = { menuOpen = false; overlay = Overlay.CHAMPIONS },
+                            )
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = { Text("Settings") },
+                                leadingIcon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                                onClick = { menuOpen = false; showSettings = true },
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
