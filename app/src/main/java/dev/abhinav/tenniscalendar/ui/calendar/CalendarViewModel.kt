@@ -127,6 +127,19 @@ class CalendarViewModel(
     fun setSurfaceFilter(surface: Surface?) =
         _uiState.update { recompute(it.copy(surfaceFilter = surface)) }
 
+    /**
+     * Locate a tournament by id (e.g. from a tapped notification), switch the calendar to its tour
+     * and month so it's shown in context, and return it for the detail sheet. Null if not loaded yet.
+     */
+    fun revealTournament(id: String): Tournament? {
+        val d = data ?: return null
+        val tournament = d.tournaments.all().firstOrNull { it.id == id } ?: return null
+        val tour = if (d.tournaments.atp.any { it.id == id }) Tour.ATP else Tour.WTA
+        val month = parseDate(tournament.end)?.let { YearMonth.from(it) }
+        _uiState.update { recompute(it.copy(tour = tour, month = month ?: it.month)) }
+        return tournament
+    }
+
     /** Full season tournament list for the current tour (for search and the champions wall). */
     fun seasonTournaments(): List<Tournament> =
         data?.forTourList(uiState.value.tour) ?: emptyList()

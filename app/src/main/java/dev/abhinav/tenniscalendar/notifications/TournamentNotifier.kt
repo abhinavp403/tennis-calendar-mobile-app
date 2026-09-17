@@ -11,6 +11,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import dev.abhinav.tenniscalendar.MainActivity
 import dev.abhinav.tenniscalendar.R
 import dev.abhinav.tenniscalendar.model.Tournament
@@ -39,8 +40,11 @@ class TournamentNotifier(private val context: Context) {
             tournament.score?.takeIf { it.isNotBlank() }?.let { append(" · ").append(it) }
         }
 
-        val intent = Intent(context, MainActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        val intent = Intent(context, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            putExtra(MainActivity.EXTRA_TOURNAMENT_ID, tournament.id)
+            data = "tenniscalendar://tournament/${tournament.id}".toUri()
+        }
         val pending = PendingIntent.getActivity(
             context,
             tournament.id.hashCode(),

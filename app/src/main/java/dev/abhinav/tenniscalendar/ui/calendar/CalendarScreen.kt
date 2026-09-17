@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -103,6 +102,7 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
+import androidx.compose.ui.platform.LocalLocale
 
 private enum class Overlay { STATS, RANKINGS, MONTH, CHAMPIONS, TOURNAMENT_SEARCH, PLAYER_SEARCH }
 
@@ -110,7 +110,11 @@ private val MONTH_YEAR: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM yy
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CalendarScreen(viewModel: CalendarViewModel = koinViewModel()) {
+fun CalendarScreen(
+    viewModel: CalendarViewModel = koinViewModel(),
+    notificationTournamentId: String? = null,
+    onNotificationConsumed: () -> Unit = {},
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     // Overlay + picker survive config changes; the transient detail sheet is cheap to reopen.
@@ -119,6 +123,15 @@ fun CalendarScreen(viewModel: CalendarViewModel = koinViewModel()) {
     var showMonthPicker by rememberSaveable { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
+
+    // A tapped notification asks to open a specific tournament: once data is loaded, switch to its
+    // tour/month and open the detail sheet, then clear the request.
+    LaunchedEffect(notificationTournamentId, state.isLoading) {
+        val id = notificationTournamentId ?: return@LaunchedEffect
+        if (state.isLoading) return@LaunchedEffect // wait until data is available
+        viewModel.revealTournament(id)?.let { sheetTournament = it }
+        onNotificationConsumed()
+    }
 
     Scaffold(
         topBar = {
@@ -486,7 +499,7 @@ private fun MonthPickerDialog(
                 // Month reel — recreated when the year changes so it re-centers.
                 key(selectedYear) {
                     WheelPicker(
-                        items = months.map { it.month.getDisplayName(TextStyle.FULL, Locale.getDefault()) },
+                        items = months.map { it.month.getDisplayName(TextStyle.FULL, LocalLocale.current.platformLocale) },
                         initialIndex = safeMonthIndex,
                         accent = accent,
                         onSettled = { monthIndex = it },
