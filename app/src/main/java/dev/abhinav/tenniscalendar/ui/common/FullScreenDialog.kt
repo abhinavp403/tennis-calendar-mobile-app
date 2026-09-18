@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -28,6 +29,8 @@ fun FullScreenDialog(
     title: String,
     onDismiss: () -> Unit,
     subtitle: String? = null,
+    subtitleColor: Color? = null,
+    titleTrailing: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     Dialog(
@@ -50,16 +53,22 @@ fun FullScreenDialog(
                     }
                     Spacer(Modifier.width(4.dp))
                     Column {
-                        Text(
-                            title,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                title,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            if (titleTrailing != null) {
+                                Spacer(Modifier.width(6.dp))
+                                titleTrailing()
+                            }
+                        }
                         if (subtitle != null) {
                             Text(
                                 subtitle,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = subtitleColor ?: MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }

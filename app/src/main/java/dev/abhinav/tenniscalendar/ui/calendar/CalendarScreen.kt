@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -88,6 +89,7 @@ import dev.abhinav.tenniscalendar.model.Surface
 import dev.abhinav.tenniscalendar.model.Tour
 import dev.abhinav.tenniscalendar.model.Tournament
 import dev.abhinav.tenniscalendar.ui.common.TournamentDetailSheet
+import dev.abhinav.tenniscalendar.ui.race.RaceDialog
 import dev.abhinav.tenniscalendar.ui.rankings.RankingsDialog
 import dev.abhinav.tenniscalendar.ui.search.PlayerSearchDialog
 import dev.abhinav.tenniscalendar.ui.search.TournamentSearchDialog
@@ -101,10 +103,9 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-import java.util.Locale
 import androidx.compose.ui.platform.LocalLocale
 
-private enum class Overlay { STATS, RANKINGS, MONTH, CHAMPIONS, TOURNAMENT_SEARCH, PLAYER_SEARCH }
+private enum class Overlay { STATS, RANKINGS, RACE, MONTH, CHAMPIONS, TOURNAMENT_SEARCH, PLAYER_SEARCH }
 
 private val MONTH_YEAR: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM yyyy")
 
@@ -171,6 +172,11 @@ fun CalendarScreen(
                                 onClick = { menuOpen = false; overlay = Overlay.TOURNAMENT_SEARCH },
                             )
                             DropdownMenuItem(
+                                text = { Text("🏁 Race to Finals") },
+                                leadingIcon = { Icon(Icons.Outlined.Flag, contentDescription = null) },
+                                onClick = { menuOpen = false; overlay = Overlay.RACE },
+                            )
+                            DropdownMenuItem(
                                 text = { Text("Champions wall") },
                                 leadingIcon = { Icon(Icons.Default.EmojiEvents, contentDescription = null) },
                                 onClick = { menuOpen = false; overlay = Overlay.CHAMPIONS },
@@ -231,6 +237,12 @@ fun CalendarScreen(
     when (overlay) {
         Overlay.STATS -> PlayerStatsDialog(state.leaderboard, state.tour) { overlay = null }
         Overlay.RANKINGS -> RankingsDialog(state.rankings, state.tour, state.rankingSnapshotLabel) { overlay = null }
+        Overlay.RACE -> RaceDialog(
+            race = viewModel.raceTour(state.tour),
+            finalsLine = viewModel.raceFinalsLine(state.tour),
+            tour = state.tour,
+            onDismiss = { overlay = null },
+        )
         Overlay.MONTH -> {
             val monthCompleted = remember(state.tour, state.month) {
                 viewModel.seasonTournaments().filter {
@@ -615,6 +627,7 @@ private fun QuickActions(onOpen: (Overlay) -> Unit, accent: Color) {
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        ActionChip("Race to Finals", Icons.Outlined.Flag, accent) { onOpen(Overlay.RACE) }
         ActionChip("Player Stats", Icons.Default.Leaderboard, accent) { onOpen(Overlay.STATS) }
         ActionChip("Rankings", Icons.AutoMirrored.Filled.TrendingUp, accent) { onOpen(Overlay.RANKINGS) }
         ActionChip("Month Results", Icons.Default.CalendarMonth, accent) { onOpen(Overlay.MONTH) }

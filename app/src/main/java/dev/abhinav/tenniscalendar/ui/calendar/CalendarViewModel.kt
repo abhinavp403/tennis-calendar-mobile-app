@@ -11,6 +11,7 @@ import dev.abhinav.tenniscalendar.domain.NameMatch
 import dev.abhinav.tenniscalendar.domain.PlayerStat
 import dev.abhinav.tenniscalendar.domain.PlayerStats
 import dev.abhinav.tenniscalendar.domain.RankingKeys
+import dev.abhinav.tenniscalendar.model.RaceTour
 import dev.abhinav.tenniscalendar.model.Surface
 import dev.abhinav.tenniscalendar.model.TennisData
 import dev.abhinav.tenniscalendar.model.Tour
@@ -145,6 +146,32 @@ class CalendarViewModel(
         data?.forTourList(uiState.value.tour) ?: emptyList()
 
     private fun TennisData.forTourList(tour: Tour) = tournaments.forTour(tour)
+
+    /** Race to the Finals standings for [tour] (null if the optional race feed is unavailable). */
+    fun raceTour(tour: Tour): RaceTour? = data?.race?.forTour(tour)
+
+    /**
+     * Finals line for the Race header, e.g. "ATP Finals · Turin · Nov 15–Nov 22": the first
+     * tournament for [tour] whose name contains "finals" and starts in the current year. Null if
+     * there's no such tournament.
+     */
+    fun raceFinalsLine(tour: Tour): String? {
+        val year = java.time.Year.now().value
+        val finals = data?.tournaments?.forTour(tour)?.firstOrNull { t ->
+            t.name.contains("finals", ignoreCase = true) &&
+                parseDate(t.start)?.year == year
+        } ?: return null
+        val city = finals.location.substringBefore(",").trim()
+        val fmt = DateTimeFormatter.ofPattern("MMM d")
+        val start = parseDate(finals.start)?.format(fmt)
+        val end = parseDate(finals.end)?.format(fmt)
+        val dates = when {
+            start != null && end != null -> "$start–$end"
+            start != null -> start
+            else -> null
+        }
+        return listOfNotNull("${tour.label} Finals", city.ifBlank { null }, dates).joinToString(" · ")
+    }
 
     /** Recomputes all derived slices from the current selections. Pure given [data]. */
     private fun recompute(input: CalendarUiState): CalendarUiState {

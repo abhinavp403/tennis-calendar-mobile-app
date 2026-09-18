@@ -1,6 +1,7 @@
 package dev.abhinav.tenniscalendar.data
 
 import dev.abhinav.tenniscalendar.model.PlayersResponse
+import dev.abhinav.tenniscalendar.model.RaceResponse
 import dev.abhinav.tenniscalendar.model.RankingsResponse
 import dev.abhinav.tenniscalendar.model.TennisData
 import dev.abhinav.tenniscalendar.model.TournamentsResponse
@@ -47,12 +48,23 @@ class TennisRepository(
             } catch (e: kotlinx.serialization.SerializationException) {
                 PlayersResponse()
             }
+            // race.json is optional too: a missing/broken file must not fail the whole load.
+            val race: RaceResponse? = try {
+                api.getRace()
+            } catch (e: IOException) {
+                null
+            } catch (e: HttpException) {
+                null
+            } catch (e: kotlinx.serialization.SerializationException) {
+                null
+            }
             cache.save(
                 json.encodeToString(TournamentsResponse.serializer(), tournaments),
                 json.encodeToString(RankingsResponse.serializer(), rankings),
                 json.encodeToString(PlayersResponse.serializer(), players),
+                race?.let { json.encodeToString(RaceResponse.serializer(), it) },
             )
-            DataResult.Success(TennisData(tournaments, rankings, players), fromCache = false)
+            DataResult.Success(TennisData(tournaments, rankings, players, race), fromCache = false)
         } catch (e: IOException) {
             fallBackToCache(DataError.NO_CONNECTION_NO_CACHE)
         } catch (e: HttpException) {
@@ -80,6 +92,9 @@ class TennisRepository(
             players = cached.players
                 ?.let { json.decodeFromString(PlayersResponse.serializer(), it) }
                 ?: PlayersResponse(),
+            race = cached.race?.let {
+                runCatching { json.decodeFromString(RaceResponse.serializer(), it) }.getOrNull()
+            },
         )
     }.getOrNull()
 }

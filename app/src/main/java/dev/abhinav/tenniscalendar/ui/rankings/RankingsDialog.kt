@@ -12,6 +12,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,6 +27,8 @@ import dev.abhinav.tenniscalendar.model.Tour
 import dev.abhinav.tenniscalendar.ui.calendar.RankingMovement
 import dev.abhinav.tenniscalendar.ui.calendar.RankingRow
 import dev.abhinav.tenniscalendar.ui.common.FullScreenDialog
+import dev.abhinav.tenniscalendar.ui.common.InfoButton
+import dev.abhinav.tenniscalendar.ui.common.RankingPointsExplainerDialog
 import dev.abhinav.tenniscalendar.ui.common.countryFlag
 
 private val UpGreen = Color(0xFF4ADE80)
@@ -35,10 +41,12 @@ fun RankingsDialog(
     snapshotLabel: String?,
     onDismiss: () -> Unit,
 ) {
+    var showExplainer by remember { mutableStateOf(false) }
     FullScreenDialog(
         title = "${tour.label} Rankings",
         subtitle = snapshotLabel?.let { "Snapshot · $it" } ?: "Top 20",
         onDismiss = onDismiss,
+        titleTrailing = { InfoButton { showExplainer = true } },
     ) {
         LazyColumn(Modifier.fillMaxSize()) {
             items(rankings, key = { it.rank.toString() + it.name }) { row ->
@@ -46,6 +54,10 @@ fun RankingsDialog(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
         }
+    }
+
+    if (showExplainer) {
+        RankingPointsExplainerDialog(tour) { showExplainer = false }
     }
 }
 

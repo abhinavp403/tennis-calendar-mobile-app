@@ -14,6 +14,7 @@ class AssetDataSource(private val context: Context) {
             tournaments = asset("tournaments.json"),
             rankings = asset("rankings.json"),
             players = runCatching { asset("players.json") }.getOrNull(),
+            race = runCatching { asset("race.json") }.getOrNull(),
         )
     }.getOrNull()
 

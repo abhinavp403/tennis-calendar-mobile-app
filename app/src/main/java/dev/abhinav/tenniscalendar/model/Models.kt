@@ -89,9 +89,52 @@ data class PlayersResponse(
     fun forTour(tour: Tour): Map<String, String> = if (tour == Tour.ATP) atp else wta
 }
 
+/** One event's contribution to a player's race points. [group] is "slam" | "masters" | "other". */
+@Serializable
+data class RaceResult(
+    val event: String = "",
+    val round: String = "",
+    val points: Int = 0,
+    val group: String = "other",
+)
+
+/** A player in the Race to the Finals standings. Optional fields may be absent in the feed. */
+@Serializable
+data class RacePlayer(
+    val rank: Int = 0,
+    val name: String = "",
+    val full: String = "",
+    val country: String = "",
+    val points: Int = 0,
+    val tournaments: Int? = null,
+    val titles: Int? = null,
+    val qualified: Boolean = false,
+    val results: List<RaceResult>? = null,
+)
+
+/** One tour's race snapshot: the top players (already sorted by rank) and when it was captured. */
+@Serializable
+data class RaceTour(
+    val asOf: String? = null,
+    val players: List<RacePlayer> = emptyList(),
+)
+
+/**
+ * race.json — the current-season "Race to the Finals" standings. Entirely optional: a missing file
+ * or a parse failure leaves this null and the Race screen shows an empty state.
+ */
+@Serializable
+data class RaceResponse(
+    val atp: RaceTour? = null,
+    val wta: RaceTour? = null,
+) {
+    fun forTour(tour: Tour): RaceTour? = if (tour == Tour.ATP) atp else wta
+}
+
 /** The payloads bundled so the repository can hand the UI a single consistent snapshot. */
 data class TennisData(
     val tournaments: TournamentsResponse,
     val rankings: RankingsResponse,
     val players: PlayersResponse = PlayersResponse(),
+    val race: RaceResponse? = null,
 )

@@ -12,15 +12,25 @@ class TennisCache(context: Context) {
     private val tournamentsFile = File(dir, "tournaments.json")
     private val rankingsFile = File(dir, "rankings.json")
     private val playersFile = File(dir, "players.json")
+    private val raceFile = File(dir, "race.json")
 
-    /** Raw cached JSON. [players] may be null for caches written before players.json existed. */
-    data class Cached(val tournaments: String, val rankings: String, val players: String?)
+    /**
+     * Raw cached JSON. [players] and [race] may be null for caches written before those files
+     * existed, or when the (optional) race feed was unavailable.
+     */
+    data class Cached(
+        val tournaments: String,
+        val rankings: String,
+        val players: String?,
+        val race: String? = null,
+    )
 
-    fun save(tournamentsJson: String, rankingsJson: String, playersJson: String) {
+    fun save(tournamentsJson: String, rankingsJson: String, playersJson: String, raceJson: String?) {
         runCatching {
             tournamentsFile.writeText(tournamentsJson)
             rankingsFile.writeText(rankingsJson)
             playersFile.writeText(playersJson)
+            if (raceJson != null) raceFile.writeText(raceJson) else raceFile.delete()
         }
     }
 
@@ -32,6 +42,7 @@ class TennisCache(context: Context) {
                 tournaments = tournamentsFile.readText(),
                 rankings = rankingsFile.readText(),
                 players = playersFile.takeIf { it.exists() }?.readText(),
+                race = raceFile.takeIf { it.exists() }?.readText(),
             )
         }.getOrNull()
     }
