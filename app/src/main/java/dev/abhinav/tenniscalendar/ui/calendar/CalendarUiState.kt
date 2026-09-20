@@ -2,7 +2,6 @@ package dev.abhinav.tenniscalendar.ui.calendar
 
 import dev.abhinav.tenniscalendar.data.DataError
 import dev.abhinav.tenniscalendar.domain.PlayerStat
-import dev.abhinav.tenniscalendar.model.Surface
 import dev.abhinav.tenniscalendar.model.Tour
 import dev.abhinav.tenniscalendar.model.Tournament
 import java.time.YearMonth
@@ -49,6 +48,14 @@ data class RankingRow(
     val movement: RankingMovement,
 )
 
+/** Glanceable "This week" home-card data for the current tour. */
+data class ThisWeek(
+    val weekLabel: String,                       // e.g. "Sep 14 – Sep 20"
+    val tournaments: List<Tournament> = emptyList(), // events overlapping this week
+    val nextSlam: Tournament? = null,            // next / ongoing Grand Slam
+    val daysToSlam: Int? = null,                 // whole days until it starts (0 if ongoing)
+)
+
 data class CalendarUiState(
     // Transient UI-only
     val isLoading: Boolean = true,
@@ -58,7 +65,6 @@ data class CalendarUiState(
     // Editable input
     val tour: Tour = Tour.ATP,
     val month: YearMonth = YearMonth.now(),
-    val surfaceFilter: Surface? = null,
     // Season range, derived from the tournament dates once data loads.
     val minMonth: YearMonth = YearMonth.now(),
     val maxMonth: YearMonth = YearMonth.now(),
@@ -71,6 +77,7 @@ data class CalendarUiState(
     val searchLeaderboard: List<PlayerStat> = emptyList(),
     val rankings: List<RankingRow> = emptyList(),
     val rankingSnapshotLabel: String? = null,
+    val thisWeek: ThisWeek? = null,
 ) {
     val hasData: Boolean get() = !isLoading && error == null
 }

@@ -7,7 +7,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -45,8 +47,6 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -80,12 +80,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhinav.tenniscalendar.R
 import dev.abhinav.tenniscalendar.data.DataError
-import dev.abhinav.tenniscalendar.model.Surface
 import dev.abhinav.tenniscalendar.model.Tour
 import dev.abhinav.tenniscalendar.model.Tournament
 import dev.abhinav.tenniscalendar.ui.common.TournamentDetailSheet
@@ -205,7 +205,6 @@ fun CalendarScreen(
                 onPrevMonth = viewModel::previousMonth,
                 onNextMonth = viewModel::nextMonth,
                 onToday = viewModel::goToToday,
-                onSurface = viewModel::setSurfaceFilter,
                 onTournamentClick = { sheetTournament = it },
                 onOpenOverlay = { overlay = it },
                 onMonthPicker = { showMonthPicker = true },
@@ -285,7 +284,6 @@ private fun CalendarContent(
     onPrevMonth: () -> Unit,
     onNextMonth: () -> Unit,
     onToday: () -> Unit,
-    onSurface: (Surface?) -> Unit,
     onTournamentClick: (Tournament) -> Unit,
     onOpenOverlay: (Overlay) -> Unit,
     onMonthPicker: () -> Unit,
@@ -300,7 +298,7 @@ private fun CalendarContent(
         Spacer(Modifier.height(8.dp))
         TourToggle(state.tour, onSelectTour)
         Spacer(Modifier.height(10.dp))
-        SurfaceChips(state.surfaceFilter, onSurface)
+        ThisWeekCard(state.thisWeek, accent, state.tour)
         Spacer(Modifier.height(10.dp))
         MonthNav(
             month = state.month,
@@ -408,43 +406,114 @@ private fun TourToggle(tour: Tour, onSelect: (Tour) -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** Glanceable "This week" home card: what's on, the world #1, and a Grand Slam countdown. */
 @Composable
-private fun SurfaceChips(selected: Surface?, onSelect: (Surface?) -> Unit) {
-    Row(
+private fun ThisWeekCard(week: ThisWeek?, accent: Color, tour: Tour) {
+    if (week == null) return
+    Column(
         Modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
     ) {
-        FilterChip(selected = selected == null, onClick = { onSelect(null) }, label = { Text("All") })
-        Surface.entries.forEach { s ->
-            val color = TennisTokens.surfaceColor(s)
-            FilterChip(
-                selected = selected == s,
-                onClick = { onSelect(if (selected == s) null else s) },
-                label = { Text(s.label) },
-                leadingIcon = {
-                    Box(
-                        Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(color),
-                    )
-                },
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = color.copy(alpha = 0.22f),
-                    selectedLabelColor = color,
-                    selectedLeadingIconColor = color,
-                ),
-                border = FilterChipDefaults.filterChipBorder(
-                    enabled = true,
-                    selected = selected == s,
-                    borderColor = MaterialTheme.colorScheme.outline,
-                    selectedBorderColor = color,
-                ),
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("This week", color = accent, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(
+                week.weekLabel,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.labelMedium,
             )
         }
+        Spacer(Modifier.height(8.dp))
+        if (week.tournaments.isEmpty()) {
+            Text(
+                "No ${tour.label} tournaments on this week.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        } else {
+            WeekTournamentStrip(week.tournaments, tour)
+        }
+        if (week.nextSlam != null && week.daysToSlam != null) {
+            val label = if (week.daysToSlam <= 0) "now" else "${week.daysToSlam}d"
+            Spacer(Modifier.height(8.dp))
+            Fact("NEXT SLAM", "${week.nextSlam.name} · $label", Modifier.fillMaxWidth(), valueColor = accent)
+        }
+    }
+}
+
+@Composable
+private fun Fact(label: String, value: String, modifier: Modifier = Modifier, valueColor: Color = Color.Unspecified) {
+    Column(modifier) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = if (valueColor == Color.Unspecified) MaterialTheme.colorScheme.onSurface else valueColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+/** One tournament fills the width; several auto-scroll as a marquee. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun WeekTournamentStrip(tournaments: List<Tournament>, tour: Tour) {
+    if (tournaments.size == 1) {
+        WeekChip(tournaments[0], tour, Modifier.fillMaxWidth())
+    } else {
+        Row(
+            Modifier.basicMarquee(iterations = Int.MAX_VALUE),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            tournaments.forEach { WeekChip(it, tour, Modifier.width(190.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun WeekChip(t: Tournament, tour: Tour, modifier: Modifier = Modifier) {
+    val tier = TennisTokens.tierColor(t.level, isSystemInDarkTheme())
+    Column(
+        modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(8.dp).clip(CircleShape).background(tier))
+            Spacer(Modifier.width(6.dp))
+            Text(
+                t.name,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.height(2.dp))
+        Text(
+            "${TennisTokens.levelLabel(t.level, tour)} · ${t.surfaceEnum?.label ?: t.surface}",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            t.location.substringBefore(",").trim(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

@@ -12,7 +12,6 @@ import dev.abhinav.tenniscalendar.domain.PlayerStat
 import dev.abhinav.tenniscalendar.domain.PlayerStats
 import dev.abhinav.tenniscalendar.domain.RankingKeys
 import dev.abhinav.tenniscalendar.model.RaceTour
-import dev.abhinav.tenniscalendar.model.Surface
 import dev.abhinav.tenniscalendar.model.TennisData
 import dev.abhinav.tenniscalendar.model.Tour
 import dev.abhinav.tenniscalendar.model.Tournament
@@ -22,9 +21,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalAdjusters
 
 class CalendarViewModel(
     private val repository: TennisRepository,
@@ -125,9 +127,6 @@ class CalendarViewModel(
 
     fun setMonth(month: YearMonth) = _uiState.update { recompute(it.copy(month = month)) }
 
-    fun setSurfaceFilter(surface: Surface?) =
-        _uiState.update { recompute(it.copy(surfaceFilter = surface)) }
-
     /**
      * Locate a tournament by id (e.g. from a tapped notification), switch the calendar to its tour
      * and month so it's shown in context, and return it for the detail sheet. Null if not loaded yet.
@@ -191,14 +190,13 @@ class CalendarViewModel(
 
         val tourList = d.tournaments.forTour(state.tour)
 
-        // Depends on tour + month + surface — always cheap, always recomputed.
+        // Depends on tour + month — always cheap, always recomputed.
         val monthTournaments = tourList
             .filter { endsInMonth(it, state.month) }
-            .filter { state.surfaceFilter == null || it.surfaceEnum == state.surfaceFilter }
             .sortedWith(compareByDescending<Tournament> { it.level }.thenBy { it.name })
 
         // The leaderboards and rankings depend only on (tour, month) — reuse the cache when those
-        // are unchanged so a surface-filter tap doesn't rebuild them.
+        // are unchanged so cheaper changes don't rebuild them.
         val key = state.tour to state.month
         val heavy = heavyCache?.takeIf { heavyKey == key }
             ?: computeHeavy(d, state.tour, state.month).also { heavyCache = it; heavyKey = key }
@@ -209,8 +207,37 @@ class CalendarViewModel(
             searchLeaderboard = heavy.searchLeaderboard,
             rankings = heavy.rankings,
             rankingSnapshotLabel = heavy.snapshotLabel,
+            thisWeek = computeThisWeek(tourList),
             canGoPrev = state.month.isAfter(minMonth),
             canGoNext = state.month.isBefore(maxMonth),
+        )
+    }
+
+    /** The glanceable "This week" home card: what's on this week and the next Grand Slam. */
+    private fun computeThisWeek(tourList: List<Tournament>): ThisWeek {
+        val today = LocalDate.now()
+        val weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        val weekEnd = weekStart.plusDays(6)
+        val fmt = DateTimeFormatter.ofPattern("MMM d")
+
+        val tournaments = tourList
+            .mapNotNull { t -> parseDate(t.start)?.let { s -> parseDate(t.end)?.let { e -> Triple(t, s, e) } } }
+            .filter { (_, s, e) -> !s.isAfter(weekEnd) && !e.isBefore(weekStart) } // overlaps this week
+            .sortedBy { it.second }
+            .map { it.first }
+
+        // Next Grand Slam: the earliest level-2000 event that hasn't finished (ongoing counts as 0 days).
+        val slam = tourList
+            .filter { it.level == 2000 }
+            .mapNotNull { t -> parseDate(t.start)?.let { s -> parseDate(t.end)?.let { e -> Triple(t, s, e) } } }
+            .filter { (_, _, e) -> !e.isBefore(today) }
+            .minByOrNull { it.second }
+
+        return ThisWeek(
+            weekLabel = "${weekStart.format(fmt)} – ${weekEnd.format(fmt)}",
+            tournaments = tournaments,
+            nextSlam = slam?.first,
+            daysToSlam = slam?.let { ChronoUnit.DAYS.between(today, it.second).coerceAtLeast(0).toInt() },
         )
     }
 
