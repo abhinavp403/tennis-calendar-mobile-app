@@ -32,10 +32,11 @@ class SettingsViewModel(
         else TournamentSync.cancel(appContext)
     }
 
-    fun setSlotTimes(slot1: LocalTime, slot2: LocalTime) = viewModelScope.launch {
-        repository.setSlotTimes(slot1, slot2)
+    fun setSlotTime(index: Int, time: LocalTime) = viewModelScope.launch {
+        repository.setSlotTime(index, time)
         if (settings.value.notificationsEnabled) {
-            TournamentSync.schedule(appContext, listOf(slot1, slot2))
+            val slots = settings.value.slotTimes.toMutableList().apply { this[index] = time }
+            TournamentSync.schedule(appContext, slots)
         }
     }
 }

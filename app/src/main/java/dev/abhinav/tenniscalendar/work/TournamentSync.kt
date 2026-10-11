@@ -13,9 +13,9 @@ import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
 /**
- * Schedules the tournament-results check. By default the Gist is rebuilt by a GitHub Action at 01:00
- * and 09:00 UTC, so the two default slots run ~30 min later; the times are user-configurable in
- * Settings. Each slot is a self-sustaining daily [PeriodicWorkRequest] whose first run is aligned to
+ * Schedules the tournament-results check. By default it runs four times a day, at 01:00, 07:00,
+ * 13:00 and 19:00 UTC (see [dev.abhinav.tenniscalendar.data.Settings.DEFAULT_SLOTS]); the times
+ * are user-configurable in Settings. Each slot is a self-sustaining daily [PeriodicWorkRequest] whose first run is aligned to
  * the target via an initial delay, so a single failed/interrupted run never breaks the schedule.
  */
 object TournamentSync {

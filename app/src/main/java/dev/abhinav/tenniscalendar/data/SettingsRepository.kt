@@ -19,11 +19,18 @@ data class Settings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val notificationsEnabled: Boolean = true,
     val defaultTour: Tour = Tour.ATP,
-    val slot1: LocalTime = LocalTime.of(1, 30),
-    val slot2: LocalTime = LocalTime.of(9, 30),
+    /** The notification check times (UTC), in order. Always [DEFAULT_SLOTS].size entries. */
+    val slotTimes: List<LocalTime> = DEFAULT_SLOTS,
 ) {
-    /** The notification check times (UTC), in order. */
-    val slotTimes: List<LocalTime> get() = listOf(slot1, slot2)
+    companion object {
+        /** Default background check times (UTC): every six hours. */
+        val DEFAULT_SLOTS: List<LocalTime> = listOf(
+            LocalTime.of(1, 0),
+            LocalTime.of(7, 0),
+            LocalTime.of(13, 0),
+            LocalTime.of(19, 0),
+        )
+    }
 }
 
 private val Context.settingsDataStore by preferencesDataStore(name = "settings")
@@ -33,16 +40,17 @@ class SettingsRepository(private val context: Context) {
     private val themeKey = stringPreferencesKey("theme_mode")
     private val notificationsKey = booleanPreferencesKey("notifications_enabled")
     private val tourKey = stringPreferencesKey("default_tour")
-    private val slot1Key = intPreferencesKey("slot1_minutes")
-    private val slot2Key = intPreferencesKey("slot2_minutes")
+    // slot1/slot2 keep their original key names so earlier customizations carry over.
+    private val slotKeys = Settings.DEFAULT_SLOTS.indices.map { intPreferencesKey("slot${it + 1}_minutes") }
 
     val settings: Flow<Settings> = context.settingsDataStore.data.map { p ->
         Settings(
             themeMode = p[themeKey]?.let { enumOrNull<ThemeMode>(it) } ?: ThemeMode.SYSTEM,
             notificationsEnabled = p[notificationsKey] ?: true,
             defaultTour = p[tourKey]?.let { enumOrNull<Tour>(it) } ?: Tour.ATP,
-            slot1 = p[slot1Key]?.let(::minutesToTime) ?: LocalTime.of(1, 30),
-            slot2 = p[slot2Key]?.let(::minutesToTime) ?: LocalTime.of(9, 30),
+            slotTimes = slotKeys.mapIndexed { i, key ->
+                p[key]?.let(::minutesToTime) ?: Settings.DEFAULT_SLOTS[i]
+            },
         )
     }
 
@@ -52,9 +60,9 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setDefaultTour(tour: Tour) = edit { it[tourKey] = tour.name }
 
-    suspend fun setSlotTimes(slot1: LocalTime, slot2: LocalTime) = edit {
-        it[slot1Key] = slot1.toSecondOfDay() / 60
-        it[slot2Key] = slot2.toSecondOfDay() / 60
+    /** Sets the check time (UTC) at [index] (0-based), leaving the other slots unchanged. */
+    suspend fun setSlotTime(index: Int, time: LocalTime) = edit {
+        it[slotKeys[index]] = time.toSecondOfDay() / 60
     }
 
     private suspend fun edit(block: (MutablePreferences) -> Unit) {

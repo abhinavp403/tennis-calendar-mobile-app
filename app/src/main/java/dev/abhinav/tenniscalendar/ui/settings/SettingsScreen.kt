@@ -52,6 +52,8 @@ private fun LocalTime.localToUtc(): LocalTime =
     atDate(LocalDate.now(ZoneId.systemDefault())).atZone(ZoneId.systemDefault())
         .toInstant().atZone(ZoneOffset.UTC).toLocalTime()
 
+private val SLOT_LABELS = listOf("First check", "Second check", "Third check", "Fourth check")
+
 @Composable
 fun SettingsScreen(onDismiss: () -> Unit, viewModel: SettingsViewModel = koinViewModel()) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
@@ -93,16 +95,15 @@ fun SettingsScreen(onDismiss: () -> Unit, viewModel: SettingsViewModel = koinVie
             if (settings.notificationsEnabled) {
                 Text(
                     "Checks for finished tournaments run at these times (your local time). " +
-                        "Results are published around 01:00 and 09:00 UTC.",
+                        "By default they run every six hours: 01:00, 07:00, 13:00 and 19:00 UTC.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
                 )
-                TimeRow("First check", settings.slot1.utcToLocal()) { pickedLocal ->
-                    viewModel.setSlotTimes(pickedLocal.localToUtc(), settings.slot2)
-                }
-                TimeRow("Second check", settings.slot2.utcToLocal()) { pickedLocal ->
-                    viewModel.setSlotTimes(settings.slot1, pickedLocal.localToUtc())
+                settings.slotTimes.forEachIndexed { i, slot ->
+                    TimeRow(SLOT_LABELS[i], slot.utcToLocal()) { pickedLocal ->
+                        viewModel.setSlotTime(i, pickedLocal.localToUtc())
+                    }
                 }
             }
             Spacer(Modifier.height(24.dp))
