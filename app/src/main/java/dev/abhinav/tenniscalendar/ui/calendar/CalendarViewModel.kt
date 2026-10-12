@@ -11,6 +11,7 @@ import dev.abhinav.tenniscalendar.domain.NameMatch
 import dev.abhinav.tenniscalendar.domain.PlayerStat
 import dev.abhinav.tenniscalendar.domain.PlayerStats
 import dev.abhinav.tenniscalendar.domain.RankingKeys
+import dev.abhinav.tenniscalendar.domain.WeekWindow
 import dev.abhinav.tenniscalendar.model.RaceTour
 import dev.abhinav.tenniscalendar.model.TennisData
 import dev.abhinav.tenniscalendar.model.Tour
@@ -21,12 +22,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalAdjusters
 
 class CalendarViewModel(
     private val repository: TennisRepository,
@@ -216,15 +215,8 @@ class CalendarViewModel(
     /** The glanceable "This week" home card: what's on this week and the next Grand Slam. */
     private fun computeThisWeek(tourList: List<Tournament>): ThisWeek {
         val today = LocalDate.now()
-        val weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-        val weekEnd = weekStart.plusDays(6)
-        val fmt = DateTimeFormatter.ofPattern("MMM d")
-
-        val tournaments = tourList
-            .mapNotNull { t -> parseDate(t.start)?.let { s -> parseDate(t.end)?.let { e -> Triple(t, s, e) } } }
-            .filter { (_, s, e) -> !s.isAfter(weekEnd) && !e.isBefore(weekStart) } // overlaps this week
-            .sortedBy { it.second }
-            .map { it.first }
+        val week = WeekWindow.containing(today)
+        val tournaments = week.tournamentsIn(tourList)
 
         // Next Grand Slam: the earliest level-2000 event that hasn't finished (ongoing counts as 0 days).
         val slam = tourList
@@ -234,7 +226,7 @@ class CalendarViewModel(
             .minByOrNull { it.second }
 
         return ThisWeek(
-            weekLabel = "${weekStart.format(fmt)} – ${weekEnd.format(fmt)}",
+            weekLabel = week.label,
             tournaments = tournaments,
             nextSlam = slam?.first,
             daysToSlam = slam?.let { ChronoUnit.DAYS.between(today, it.second).coerceAtLeast(0).toInt() },

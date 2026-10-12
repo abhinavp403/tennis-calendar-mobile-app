@@ -23,6 +23,8 @@ class TennisRepository(
     private val assets: AssetDataSource,
     private val json: Json,
     private val ioDispatcher: CoroutineDispatcher,
+    /** Called after a fresh payload is written to the cache (e.g. to re-render the home widget). */
+    private val onCacheUpdated: suspend () -> Unit = {},
 ) {
     /**
      * Local-only load (no network): the disk cache if present, otherwise the bundled asset seed.
@@ -64,6 +66,7 @@ class TennisRepository(
                 json.encodeToString(PlayersResponse.serializer(), players),
                 race?.let { json.encodeToString(RaceResponse.serializer(), it) },
             )
+            runCatching { onCacheUpdated() }
             DataResult.Success(TennisData(tournaments, rankings, players, race), fromCache = false)
         } catch (e: IOException) {
             fallBackToCache(DataError.NO_CONNECTION_NO_CACHE)

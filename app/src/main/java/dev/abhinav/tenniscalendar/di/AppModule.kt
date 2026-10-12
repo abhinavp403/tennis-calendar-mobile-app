@@ -11,11 +11,13 @@ import dev.abhinav.tenniscalendar.data.TennisRepository
 import dev.abhinav.tenniscalendar.notifications.TournamentNotifier
 import dev.abhinav.tenniscalendar.ui.calendar.CalendarViewModel
 import dev.abhinav.tenniscalendar.ui.settings.SettingsViewModel
+import dev.abhinav.tenniscalendar.widget.TennisWidget
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import retrofit2.Retrofit
@@ -69,7 +71,10 @@ val appModule = module {
 
     single { SettingsRepository(get()) }
 
-    single { TennisRepository(get(), get(), get(), get(), Dispatchers.IO) }
+    single {
+        val context = androidContext()
+        TennisRepository(get(), get(), get(), get(), Dispatchers.IO) { TennisWidget.refresh(context) }
+    }
 
     viewModel { CalendarViewModel(get(), get(), get()) }
 
