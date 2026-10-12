@@ -15,20 +15,33 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import dev.abhinav.tenniscalendar.data.TennisRepository
 import dev.abhinav.tenniscalendar.domain.PlayerStat
+import dev.abhinav.tenniscalendar.domain.RankingHistory
 import dev.abhinav.tenniscalendar.model.Tour
 import dev.abhinav.tenniscalendar.ui.common.FullScreenDialog
 import dev.abhinav.tenniscalendar.ui.common.countryFlag
 import dev.abhinav.tenniscalendar.ui.theme.TennisTokens
+import org.koin.compose.koinInject
 
 @Composable
 fun PlayerProfileDialog(player: PlayerStat, tour: Tour, onDismiss: () -> Unit) {
     val flag = player.country?.let { countryFlag(it) }.orEmpty()
     val title = if (flag.isBlank()) player.fullName else "$flag  ${player.fullName}"
+    // Read from the same local cache the calendar was built from; null hides the section (e.g. a
+    // player who never made the top of any snapshot).
+    val repository = koinInject<TennisRepository>()
+    val history by produceState<RankingHistory.History?>(null, player.name, tour) {
+        value = runCatching { repository.loadLocal() }.getOrNull()
+            ?.rankings?.forTour(tour)
+            ?.let { RankingHistory.forPlayer(it, player.name) }
+    }
     FullScreenDialog(title = title, onDismiss = onDismiss) {
         Column(
             Modifier
@@ -51,6 +64,11 @@ fun PlayerProfileDialog(player: PlayerStat, tour: Tour, onDismiss: () -> Unit) {
                     Modifier.weight(1f),
                     accent = player.bestSurface != null,
                 )
+            }
+
+            history?.let {
+                SectionHeader("Ranking this season")
+                RankingHistoryChart(it, tour)
             }
 
             if (player.surfaceFinals.isNotEmpty()) {
