@@ -5,6 +5,7 @@ import dev.abhinav.tenniscalendar.data.SettingsRepository
 import dev.abhinav.tenniscalendar.di.appModule
 import dev.abhinav.tenniscalendar.notifications.TournamentNotifier
 import dev.abhinav.tenniscalendar.widget.TennisWidget
+import dev.abhinav.tenniscalendar.widget.WidgetPreviews
 import dev.abhinav.tenniscalendar.work.TournamentSync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +47,8 @@ class TennisApp : Application(), KoinComponent {
                 }
             }
         }
+        // Picker preview for the home widget (Android 15+); a no-op once published for this version.
+        appScope.launch { WidgetPreviews.publishIfNeeded(this@TennisApp) }
         // The home widget shows the default tour, so re-render it when that setting changes.
         appScope.launch {
             runCatching {

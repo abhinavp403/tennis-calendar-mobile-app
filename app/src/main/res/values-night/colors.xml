@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_preview_background">#FF1B1B21</color>
+    <color name="widget_preview_on_surface">#FFE4E1E9</color>
+    <color name="widget_preview_on_surface_variant">#FFC6C5D0</color>
+    <color name="widget_preview_primary">#FFB3C5FF</color>
+    <color name="widget_tier_masters">#FFF59E0B</color>
+    <color name="widget_tier_500">#FF60A5FA</color>
+</resources>

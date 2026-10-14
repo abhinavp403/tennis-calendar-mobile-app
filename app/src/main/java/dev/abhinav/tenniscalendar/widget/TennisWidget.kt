@@ -98,6 +98,15 @@ class TennisWidget : GlanceAppWidget(), KoinComponent {
         }
     }
 
+    /** The widget-picker preview (Android 15+), drawn by the same UI from sample data. */
+    override suspend fun providePreview(context: Context, widgetCategory: Int) {
+        provideContent {
+            GlanceTheme {
+                WidgetContent(context, WidgetPreviews.SAMPLE)
+            }
+        }
+    }
+
     companion object {
         /** Per-instance tour picked via the chip; absent means "follow the default tour". */
         internal val SELECTED_TOUR = stringPreferencesKey("selected_tour")

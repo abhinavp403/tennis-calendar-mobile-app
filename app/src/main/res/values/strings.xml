@@ -1,4 +1,17 @@
 <resources>
     <string name="app_name">Tennis Calendar</string>
     <string name="widget_description">This week\'s tournaments, finals results and the world #1</string>
+
+    <!-- Sample content for the static widget-picker preview. -->
+    <string name="widget_preview_tour" translatable="false">ATP ⇄</string>
+    <string name="widget_preview_title">This week</string>
+    <string name="widget_preview_week" translatable="false">Oct 5 – Oct 11</string>
+    <string name="widget_preview_event1" translatable="false">Shanghai Masters · Masters 1000</string>
+    <string name="widget_preview_event1_line" translatable="false">Final Sun, Oct 18</string>
+    <string name="widget_preview_event2" translatable="false">China Open · ATP 500</string>
+    <string name="widget_preview_event2_line" translatable="false">N. Djokovic def. A. de Minaur</string>
+    <string name="widget_preview_event3" translatable="false">Tokyo Open · ATP 500</string>
+    <string name="widget_preview_event3_line" translatable="false">C. Alcaraz def. J. Lehečka</string>
+    <string name="widget_preview_top_rank" translatable="false">#1</string>
+    <string name="widget_preview_top_player" translatable="false">J. Sinner (ITA) · 11,000 pts</string>
 </resources>
