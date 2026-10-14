@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import dev.abhinav.tenniscalendar.domain.RankingHistory
 import dev.abhinav.tenniscalendar.model.Tour
 import dev.abhinav.tenniscalendar.ui.theme.TennisTokens
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
@@ -86,7 +87,7 @@ fun RankingHistoryChart(history: RankingHistory.History, tour: Tour, modifier: M
             }
             // First and last snapshot month along the bottom.
             drawLabel(measurer, first.format(MONTH_FORMAT), labelStyle, Offset(left, size.height - bottomLabels / 2), alignEnd = false)
-            if (points.size > 1) {
+            if (YearMonth.from(points.last().date) != YearMonth.from(first)) {
                 drawLabel(measurer, points.last().date.format(MONTH_FORMAT), labelStyle, Offset(right, size.height - bottomLabels / 2), alignEnd = true)
             }
 

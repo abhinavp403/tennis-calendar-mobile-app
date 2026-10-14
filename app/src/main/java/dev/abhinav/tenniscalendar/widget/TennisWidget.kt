@@ -52,6 +52,7 @@ import androidx.glance.text.TextStyle
 import dev.abhinav.tenniscalendar.MainActivity
 import dev.abhinav.tenniscalendar.data.SettingsRepository
 import dev.abhinav.tenniscalendar.data.TennisRepository
+import dev.abhinav.tenniscalendar.data.runSuspendCatching
 import dev.abhinav.tenniscalendar.model.TennisData
 import dev.abhinav.tenniscalendar.model.Tour
 import dev.abhinav.tenniscalendar.notifications.NotificationLink
@@ -76,8 +77,8 @@ class TennisWidget : GlanceAppWidget(), KoinComponent {
     private data class Snapshot(val data: TennisData?, val defaultTour: Tour)
 
     private suspend fun loadSnapshot() = Snapshot(
-        data = runCatching { repository.loadLocal() }.getOrNull(),
-        defaultTour = runCatching { settings.settings.first().defaultTour }.getOrDefault(Tour.ATP),
+        data = runSuspendCatching { repository.loadLocal() }.getOrNull(),
+        defaultTour = runSuspendCatching { settings.settings.first().defaultTour }.getOrDefault(Tour.ATP),
     )
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
@@ -114,7 +115,7 @@ class TennisWidget : GlanceAppWidget(), KoinComponent {
 
         /** Re-render every placed instance. Never throws: a widget hiccup must not break data loads. */
         suspend fun refresh(context: Context) {
-            runCatching {
+            runSuspendCatching {
                 val widget = TennisWidget()
                 GlanceAppWidgetManager(context).getGlanceIds(TennisWidget::class.java).forEach { id ->
                     updateAppWidgetState(context, id) { it[DATA_STAMP] = System.currentTimeMillis() }

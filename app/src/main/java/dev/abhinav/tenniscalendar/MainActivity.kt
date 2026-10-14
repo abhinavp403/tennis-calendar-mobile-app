@@ -35,7 +35,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        pendingLink = NotificationLink.fromIntent(intent)
+        // Only on a fresh start: after rotation or process restore the activity still carries the
+        // original intent, and re-reading it would replay a link the user already dealt with.
+        if (savedInstanceState == null) pendingLink = NotificationLink.fromIntent(intent)
         // Edge-to-edge without the APIs deprecated in Android 15 (API 35): draw behind the system
         // bars and only control the bar-icon contrast. Bar colors are left to the system
         // (transparent on API 35+), so we never call the deprecated

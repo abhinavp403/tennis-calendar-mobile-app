@@ -23,8 +23,11 @@ class TennisRepository(
     private val assets: AssetDataSource,
     private val json: Json,
     private val ioDispatcher: CoroutineDispatcher,
-    /** Called after a fresh payload is written to the cache (e.g. to re-render the home widget). */
-    private val onCacheUpdated: suspend () -> Unit = {},
+    /**
+     * Called after a fresh payload is written to the cache (e.g. to re-render the home widget).
+     * Must not block: load() returns only after it, so slow work belongs on another scope.
+     */
+    private val onCacheUpdated: () -> Unit = {},
 ) {
     /**
      * Local-only load (no network): the disk cache if present, otherwise the bundled asset seed.

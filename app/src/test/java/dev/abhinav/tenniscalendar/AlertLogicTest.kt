@@ -10,6 +10,7 @@ import dev.abhinav.tenniscalendar.work.RankingAlertLogic
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.LocalDate
 
 class AlertLogicTest {
 
@@ -85,7 +86,27 @@ class AlertLogicTest {
         assertNull(outcome.change)
     }
 
+    @Test
+    fun `short base snapshot reports no top-10 entrants`() {
+        val truncated = top("J. Sinner", "C. Alcaraz", "A. Zverev") // partial feed rebuild
+        val outcome = RankingAlertLogic.decide(
+            Tour.ATP, mapOf("2026-07-13" to truncated, "2026-07-27" to base), "2026-07-13",
+        )
+        assertNull(outcome.change) // #1 unchanged, and ranks 4–10 aren't "new"
+    }
+
     // --- Race ---
+
+    @Test
+    fun `missing asOf falls back to the current year for the season`() {
+        val race = RaceResponse(
+            atp = RaceTour(asOf = null, players = listOf(RacePlayer(rank = 1, name = "J. Sinner", qualified = true))),
+        )
+        assertEquals(
+            listOf("atp:2027:j. sinner"),
+            RaceAlertLogic.qualifiers(race, today = LocalDate.of(2027, 10, 1)).map { it.id },
+        )
+    }
 
     @Test
     fun `qualifier ids are scoped to tour and season`() {

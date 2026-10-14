@@ -12,7 +12,10 @@ import dev.abhinav.tenniscalendar.notifications.TournamentNotifier
 import dev.abhinav.tenniscalendar.ui.calendar.CalendarViewModel
 import dev.abhinav.tenniscalendar.ui.settings.SettingsViewModel
 import dev.abhinav.tenniscalendar.widget.TennisWidget
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -73,7 +76,10 @@ val appModule = module {
 
     single {
         val context = androidContext()
-        TennisRepository(get(), get(), get(), get(), Dispatchers.IO) { TennisWidget.refresh(context) }
+        val widgetScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        TennisRepository(get(), get(), get(), get(), Dispatchers.IO) {
+            widgetScope.launch { TennisWidget.refresh(context) }
+        }
     }
 
     viewModel { CalendarViewModel(get(), get(), get()) }

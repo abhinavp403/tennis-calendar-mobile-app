@@ -7,6 +7,7 @@ import dev.abhinav.tenniscalendar.data.DataResult
 import dev.abhinav.tenniscalendar.data.NotificationPrefs
 import dev.abhinav.tenniscalendar.data.Settings
 import dev.abhinav.tenniscalendar.data.SettingsRepository
+import dev.abhinav.tenniscalendar.data.runSuspendCatching
 import dev.abhinav.tenniscalendar.data.TennisRepository
 import dev.abhinav.tenniscalendar.model.TennisData
 import dev.abhinav.tenniscalendar.model.Tour
@@ -53,9 +54,9 @@ class TournamentSyncWorker(
                 prefs.markSeen(outcome.toNotify)
             }
             // Independent extras: a failure in one must not cost the tournament alerts above.
-            val current = runCatching { settings.settings.first() }.getOrDefault(Settings())
-            runCatching { checkRankings(result.data, current.rankingAlerts) }
-            runCatching { checkRace(result.data, current.raceAlerts) }
+            val current = runSuspendCatching { settings.settings.first() }.getOrDefault(Settings())
+            runSuspendCatching { checkRankings(result.data, current.rankingAlerts) }
+            runSuspendCatching { checkRace(result.data, current.raceAlerts) }
             Result.success()
         }
     } catch (t: Throwable) {

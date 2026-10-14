@@ -6,6 +6,7 @@ import dev.abhinav.tenniscalendar.model.RacePlayer
 import dev.abhinav.tenniscalendar.model.RaceResponse
 import dev.abhinav.tenniscalendar.model.RankingPlayer
 import dev.abhinav.tenniscalendar.model.Tour
+import java.time.LocalDate
 
 /**
  * Pure decision logic for ranking-change alerts. A new snapshot is compared with the one we last
@@ -52,7 +53,8 @@ object RankingAlertLogic {
             NameMatch.fold(oldOne.name) != NameMatch.fold(newOne.name)
 
         val beforeTop = before.filter { it.rank <= TOP }.map { NameMatch.fold(it.name) }.toSet()
-        val entered = if (before.isEmpty()) emptyList() else
+        // A base list shorter than the top N can't say who was already in it, so skip entrants.
+        val entered = if (before.size < TOP) emptyList() else
             now.filter { it.rank <= TOP && NameMatch.fold(it.name) !in beforeTop }
 
         val change = if (numberOneChanged || entered.isNotEmpty()) {
@@ -76,9 +78,11 @@ object RaceAlertLogic {
 
     data class Qualifier(val id: String, val tour: Tour, val player: RacePlayer)
 
-    fun qualifiers(race: RaceResponse): List<Qualifier> = Tour.entries.flatMap { tour ->
+    /** [today] supplies the season when the feed's `asOf` is missing, so ids never lose their year. */
+    fun qualifiers(race: RaceResponse, today: LocalDate = LocalDate.now()): List<Qualifier> = Tour.entries.flatMap { tour ->
         val raceTour = race.forTour(tour) ?: return@flatMap emptyList()
-        val season = raceTour.asOf?.take(4).orEmpty()
+        val season = raceTour.asOf?.take(4)?.takeIf { it.length == 4 && it.all(Char::isDigit) }
+            ?: today.year.toString()
         raceTour.players
             .filter { it.qualified && it.name.isNotBlank() }
             .map { Qualifier("${tour.key}:$season:${NameMatch.fold(it.name)}", tour, it) }
