@@ -93,8 +93,20 @@ fun SettingsScreen(onDismiss: () -> Unit, viewModel: SettingsViewModel = koinVie
                 onToggle = viewModel::setNotificationsEnabled,
             )
             if (settings.notificationsEnabled) {
+                SwitchRow(
+                    label = "Ranking changes",
+                    supporting = "A new world #1 or players entering the top 10",
+                    checked = settings.rankingAlerts,
+                    onCheckedChange = viewModel::setRankingAlerts,
+                )
+                SwitchRow(
+                    label = "Race to the Finals",
+                    supporting = "When a player qualifies for the Finals",
+                    checked = settings.raceAlerts,
+                    onCheckedChange = viewModel::setRaceAlerts,
+                )
                 Text(
-                    "Checks for finished tournaments run at these times (your local time). " +
+                    "Checks for new results, rankings and qualifiers run at these times (your local time). " +
                         "By default they run every six hours: 01:00, 07:00, 13:00 and 19:00 UTC.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -158,6 +170,26 @@ private fun NotificationsToggle(enabled: Boolean, onToggle: (Boolean) -> Unit) {
                 onToggle(checked)
             },
         )
+    }
+}
+
+@Composable
+private fun SwitchRow(label: String, supporting: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                supporting,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

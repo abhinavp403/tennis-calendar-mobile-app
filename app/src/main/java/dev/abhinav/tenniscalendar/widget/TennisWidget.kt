@@ -11,7 +11,6 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -55,6 +54,7 @@ import dev.abhinav.tenniscalendar.data.SettingsRepository
 import dev.abhinav.tenniscalendar.data.TennisRepository
 import dev.abhinav.tenniscalendar.model.TennisData
 import dev.abhinav.tenniscalendar.model.Tour
+import dev.abhinav.tenniscalendar.notifications.NotificationLink
 import dev.abhinav.tenniscalendar.ui.theme.TennisTokens
 import kotlinx.coroutines.flow.first
 import org.koin.core.component.KoinComponent
@@ -283,11 +283,4 @@ private fun fixedColor(color: Color) = ColorProvider(day = color, night = color)
 
 /** Opens the app on this tournament's detail sheet, same path as a tapped results notification. */
 private fun openTournament(context: Context, tournamentId: String): Action =
-    actionStartActivity(
-        Intent(context, MainActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            putExtra(MainActivity.EXTRA_TOURNAMENT_ID, tournamentId)
-            // A distinct data URI keeps each row's PendingIntent from collapsing into one.
-            data = "tenniscalendar://tournament/$tournamentId".toUri()
-        }
-    )
+    actionStartActivity(NotificationLink.Tournament(tournamentId).toIntent(context))

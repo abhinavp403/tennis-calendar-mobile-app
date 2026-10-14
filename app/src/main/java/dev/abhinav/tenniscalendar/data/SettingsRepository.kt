@@ -18,6 +18,10 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
 data class Settings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val notificationsEnabled: Boolean = true,
+    /** New world #1 / top-10 entries (only while [notificationsEnabled]). */
+    val rankingAlerts: Boolean = true,
+    /** Race to the Finals qualifiers (only while [notificationsEnabled]). */
+    val raceAlerts: Boolean = true,
     val defaultTour: Tour = Tour.ATP,
     /** The notification check times (UTC), in order. Always [DEFAULT_SLOTS].size entries. */
     val slotTimes: List<LocalTime> = DEFAULT_SLOTS,
@@ -39,6 +43,8 @@ class SettingsRepository(private val context: Context) {
 
     private val themeKey = stringPreferencesKey("theme_mode")
     private val notificationsKey = booleanPreferencesKey("notifications_enabled")
+    private val rankingAlertsKey = booleanPreferencesKey("ranking_alerts")
+    private val raceAlertsKey = booleanPreferencesKey("race_alerts")
     private val tourKey = stringPreferencesKey("default_tour")
     // slot1/slot2 keep their original key names so earlier customizations carry over.
     private val slotKeys = Settings.DEFAULT_SLOTS.indices.map { intPreferencesKey("slot${it + 1}_minutes") }
@@ -47,6 +53,8 @@ class SettingsRepository(private val context: Context) {
         Settings(
             themeMode = p[themeKey]?.let { enumOrNull<ThemeMode>(it) } ?: ThemeMode.SYSTEM,
             notificationsEnabled = p[notificationsKey] ?: true,
+            rankingAlerts = p[rankingAlertsKey] ?: true,
+            raceAlerts = p[raceAlertsKey] ?: true,
             defaultTour = p[tourKey]?.let { enumOrNull<Tour>(it) } ?: Tour.ATP,
             slotTimes = slotKeys.mapIndexed { i, key ->
                 p[key]?.let(::minutesToTime) ?: Settings.DEFAULT_SLOTS[i]
@@ -57,6 +65,10 @@ class SettingsRepository(private val context: Context) {
     suspend fun setThemeMode(mode: ThemeMode) = edit { it[themeKey] = mode.name }
 
     suspend fun setNotificationsEnabled(enabled: Boolean) = edit { it[notificationsKey] = enabled }
+
+    suspend fun setRankingAlerts(enabled: Boolean) = edit { it[rankingAlertsKey] = enabled }
+
+    suspend fun setRaceAlerts(enabled: Boolean) = edit { it[raceAlertsKey] = enabled }
 
     suspend fun setDefaultTour(tour: Tour) = edit { it[tourKey] = tour.name }
 

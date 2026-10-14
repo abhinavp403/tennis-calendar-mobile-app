@@ -32,6 +32,10 @@ class SettingsViewModel(
         else TournamentSync.cancel(appContext)
     }
 
+    fun setRankingAlerts(enabled: Boolean) = viewModelScope.launch { repository.setRankingAlerts(enabled) }
+
+    fun setRaceAlerts(enabled: Boolean) = viewModelScope.launch { repository.setRaceAlerts(enabled) }
+
     fun setSlotTime(index: Int, time: LocalTime) = viewModelScope.launch {
         repository.setSlotTime(index, time)
         if (settings.value.notificationsEnabled) {

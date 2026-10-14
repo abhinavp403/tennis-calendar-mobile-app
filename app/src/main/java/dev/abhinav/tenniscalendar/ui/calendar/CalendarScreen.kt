@@ -97,6 +97,7 @@ import dev.abhinav.tenniscalendar.ui.settings.SettingsScreen
 import dev.abhinav.tenniscalendar.ui.stats.PlayerStatsDialog
 import dev.abhinav.tenniscalendar.ui.summary.ChampionsWallDialog
 import dev.abhinav.tenniscalendar.ui.summary.MonthSummaryDialog
+import dev.abhinav.tenniscalendar.notifications.NotificationLink
 import dev.abhinav.tenniscalendar.ui.theme.TennisTokens
 import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDate
@@ -113,7 +114,7 @@ private val MONTH_YEAR: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM yy
 @Composable
 fun CalendarScreen(
     viewModel: CalendarViewModel = koinViewModel(),
-    notificationTournamentId: String? = null,
+    notificationLink: NotificationLink? = null,
     onNotificationConsumed: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -125,12 +126,25 @@ fun CalendarScreen(
     var showSettings by rememberSaveable { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
 
-    // A tapped notification asks to open a specific tournament: once data is loaded, switch to its
-    // tour/month and open the detail sheet, then clear the request.
-    LaunchedEffect(notificationTournamentId, state.isLoading) {
-        val id = notificationTournamentId ?: return@LaunchedEffect
+    // A tapped notification asks to open something specific: once data is loaded, act on it, then
+    // clear the request. A tournament opens its detail sheet in context; rankings and race open on
+    // the alert's tour at the current month, so the newest snapshot is the one shown.
+    LaunchedEffect(notificationLink, state.isLoading) {
+        val link = notificationLink ?: return@LaunchedEffect
         if (state.isLoading) return@LaunchedEffect // wait until data is available
-        viewModel.revealTournament(id)?.let { sheetTournament = it }
+        when (link) {
+            is NotificationLink.Tournament ->
+                viewModel.revealTournament(link.id)?.let { sheetTournament = it }
+            is NotificationLink.Rankings -> {
+                viewModel.selectTour(link.tour)
+                viewModel.goToToday()
+                overlay = Overlay.RANKINGS
+            }
+            is NotificationLink.Race -> {
+                viewModel.selectTour(link.tour)
+                overlay = Overlay.RACE
+            }
+        }
         onNotificationConsumed()
     }
 

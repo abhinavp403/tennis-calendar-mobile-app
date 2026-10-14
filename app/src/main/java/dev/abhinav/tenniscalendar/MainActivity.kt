@@ -23,18 +23,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.abhinav.tenniscalendar.data.Settings
 import dev.abhinav.tenniscalendar.data.SettingsRepository
 import dev.abhinav.tenniscalendar.data.ThemeMode
+import dev.abhinav.tenniscalendar.notifications.NotificationLink
 import dev.abhinav.tenniscalendar.ui.calendar.CalendarScreen
 import dev.abhinav.tenniscalendar.ui.theme.TennisCalendarTheme
 import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
 
-    // The tournament id from a tapped notification, surfaced to Compose to open its detail sheet.
-    private var pendingTournamentId by mutableStateOf<String?>(null)
+    // Where a tapped notification or widget row asked to go, surfaced to Compose to act on.
+    private var pendingLink by mutableStateOf<NotificationLink?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        pendingTournamentId = intent?.getStringExtra(EXTRA_TOURNAMENT_ID)
+        pendingLink = NotificationLink.fromIntent(intent)
         // Edge-to-edge without the APIs deprecated in Android 15 (API 35): draw behind the system
         // bars and only control the bar-icon contrast. Bar colors are left to the system
         // (transparent on API 35+), so we never call the deprecated
@@ -59,8 +60,8 @@ class MainActivity : ComponentActivity() {
                 }
                 RequestNotificationPermission()
                 CalendarScreen(
-                    notificationTournamentId = pendingTournamentId,
-                    onNotificationConsumed = { pendingTournamentId = null },
+                    notificationLink = pendingLink,
+                    onNotificationConsumed = { pendingLink = null },
                 )
             }
         }
@@ -70,7 +71,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        pendingTournamentId = intent.getStringExtra(EXTRA_TOURNAMENT_ID)
+        pendingLink = NotificationLink.fromIntent(intent)
     }
 
     /** Ask for POST_NOTIFICATIONS once on launch (Android 13+) so results notifications can show. */
