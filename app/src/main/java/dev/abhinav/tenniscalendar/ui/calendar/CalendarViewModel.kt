@@ -279,7 +279,7 @@ class CalendarViewModel(
         val searchLeaderboard = PlayerStats.leaderboard(tourList, latestMonth)
             .map { it.copy(country = countryOf(it.name)) }
 
-        val (rankings, snapshotLabel) = buildRankings(d, tour, month)
+        val (rankings, snapshotLabel) = buildRankings(d, tour, month, ::countryOf)
         return Heavy(leaderboard, searchLeaderboard, rankings, snapshotLabel)
     }
 
@@ -287,6 +287,7 @@ class CalendarViewModel(
         d: TennisData,
         tour: Tour,
         month: YearMonth,
+        countryOf: (String) -> String?,
     ): Pair<List<RankingRow>, String?> {
         val map = d.rankings.forTour(tour)
         val (active, previous) = RankingKeys.activeAndPrevious(map.keys, month)
@@ -306,7 +307,8 @@ class CalendarViewModel(
                     prev > player.rank -> RankingMovement.Up(prev - player.rank)
                     else -> RankingMovement.Down(player.rank - prev)
                 }
-                RankingRow(player.rank, player.name, player.country, player.points, movement)
+                val country = countryOf(player.name) ?: player.country
+                RankingRow(player.rank, player.name, country, player.points, movement)
             }
         return rows to active.date.format(SNAPSHOT_FORMAT)
     }

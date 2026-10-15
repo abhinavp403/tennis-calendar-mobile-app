@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -113,5 +112,5 @@ private val IOC_TO_ISO2 = mapOf(
     "TLS" to "TL", "TOG" to "TG", "TPE" to "TW", "TTO" to "TT", "TUN" to "TN", "TUR" to "TR",
     "TUV" to "TV", "UAE" to "AE", "UGA" to "UG", "UKR" to "UA", "URU" to "UY", "USA" to "US",
     "UZB" to "UZ", "VAN" to "VU", "VEN" to "VE", "VIE" to "VN", "VIN" to "VC", "YEM" to "YE",
-    "ZAM" to "ZM", "ZIM" to "ZW",
+    "ZAM" to "ZM", "ZIM" to "ZW", "PHL" to "PH",
 )
